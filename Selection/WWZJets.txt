@@ -1,0 +1,1 @@
+root://xrootd-cms.infn.it//store/user/arizzi/NanoCrabProdXmas/WWZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8/NanoCrabXmasRunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asym___heIV_v6-v1__278/171221_112441/0000/nano_1.root
