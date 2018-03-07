@@ -3,6 +3,7 @@
 #include <TSystem.h>                // interface to OS
 #include <TFile.h>                  // file handle class
 #include <TTree.h>                  // class to access ntuples
+#include <TH1D.h>
 #include <TClonesArray.h>           // ROOT array class
 #include <TBenchmark.h>             // class to track macro running statistics
 #include <TLorentzVector.h>
@@ -18,7 +19,9 @@
 #endif
 
 void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2RazorNtupleV3.15/MC_Summer16/RunIISpring16/v5/sixie/WWZJetsTo4L2Nu_4f_TuneCUETP8M1_13TeV_aMCatNLOFxFx_pythia8/Run2RazorNtuplerV3p15_ToCERN_MC_Summer16_25ns_RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v2_v5_v1/170815_180614/0000/razorNtuple_10.root",
-		  TString outfile="test.root"
+	       TString outfile="test.root", 
+	       Float_t xsec=1.0, 
+	       Float_t lumi=100.0
 		  ) {
 
   const float EL_MASS = 0.000511;
@@ -58,6 +61,7 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
   Float_t         metPt;
   Float_t         metPhi;
 
+  Float_t         genWeight;
   Int_t           nGenParticle;
   Int_t           gParticleMotherId[4000];   //[nGenParticle]
   Int_t           gParticleMotherIndex[4000];   //[nGenParticle]
@@ -94,6 +98,8 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
   t->SetBranchAddress("metPt",	       	 &metPt);
   t->SetBranchAddress("metPhi",          &metPhi);
 
+  t->SetBranchAddress("genWeight",         &genWeight);
+
   //t->SetBranchAddress("nGenParticle",         &nGenParticle);
   //t->SetBranchAddress("gParticleMotherId",    &gParticleMotherId);
   //t->SetBranchAddress("gParticleMotherIndex", &gParticleMotherIndex);
@@ -107,7 +113,8 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
   TFile *of = new TFile(outfile,"recreate");
   TTree *ot = new TTree("wwz","wwz");
 
-  //
+  TH1D *hnorm = new TH1D("hnorm", "", 1, 0.5, 1.5);
+
   //int wp1_f=0, wp2_f=0, wm1_f=0, wm2_f=0, z1_f=0, z2_f=0;
   //TLorentzVector z(0,0,0,0),   wp(0,0,0,0), wm(0,0,0,0);
   //TLorentzVector z1(0,0,0,0),  z2(0,0,0,0);
@@ -148,6 +155,8 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
   int bestZ1=-1;
   int bestZ2=-1;
 
+  float eventWeight=0;
+
   float L1_pt=0, L1_eta=0, L1_phi=0, L1_m=0; int L1_pid=0;
   float L2_pt=0, L2_eta=0, L2_phi=0, L2_m=0; int L2_pid=0;
   float L3_pt=0, L3_eta=0, L3_phi=0, L3_m=0; int L3_pid=0;
@@ -156,6 +165,12 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
   float MET_pt=0, MET_phi=0;
 
   float Z_m=0, WW_mvis=0, WWZ_mvis=0;
+
+  ot->Branch("isData",      &isData,      "isData/O");
+  ot->Branch("runNum",      &runNum,      "runNum/i");
+  ot->Branch("lumiNum",     &lumiNum,     "lumiNum/i");
+  ot->Branch("eventNum",    &eventNum,    "eventNum/i");
+  ot->Branch("eventWeight", &eventWeight, "eventweight/F");
 
   ot->Branch("L1_pt",  &L1_pt,  "L1_pt/F"); //highest pT lepton from Z
   ot->Branch("L1_eta", &L1_eta, "L1_eta/F");
@@ -191,6 +206,8 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
   for (uint i=0; i<t->GetEntries(); i++) {
   //for (uint i=0; i<50; i++) {
     t->GetEntry(i);
+
+    hnorm->Fill(1.0);
 
     std::vector<int> eleIndex;
     std::vector<int> muIndex;
@@ -383,6 +400,11 @@ void Selection(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Raz
 
     MET_pt=metPt;
     MET_phi=metPhi;
+
+    if (isData) eventWeight=1.0;
+    else {
+      eventWeight=genWeight*xsec*lumi;
+    }
     
     ot->Fill();
 

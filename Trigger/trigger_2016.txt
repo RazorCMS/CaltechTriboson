@@ -1,0 +1,10 @@
+$ SingleElectron
+HLT_Ele27_WPTight_Gsf_v1
+HLT_Ele27_eta2p1_WPLoose_Gsf_v3
+HLT_Ele27_eta2p1_WPTight_Gsf_v2
+HLT_Ele32_eta2p1_WPTight_Gsf_v2
+
+$ SingleMuon
+HLT_IsoMu22_v2
+HLT_IsoMu24_v1
+HLT_IsoMu27_v3

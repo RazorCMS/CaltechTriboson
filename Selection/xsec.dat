@@ -1,0 +1,15 @@
+WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8		61526.7
+DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8 	1921.8*3
+TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8 			670.3*1.24088
+WWTo2L2Nu_13TeV-powheg 						12.178
+WZJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8 			5.26
+WZTo3LNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8 		4.42965
+ZZTo4L_13TeV-amcatnloFXFX-pythia8 				1.212
+WWW_4F_TuneCUETP8M1_13TeV-amcatnlo-pythia8 			0.2086
+WZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8                         0.05565
+WWZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8                         0.1651
+WWZJetsTo4L2Nu_4f_TuneCUETP8M1_13TeV_aMCatNLOFxFx_pythia8 	0.1651*0.003179651616
+ZZZ_TuneCUETP8M1_13TeV-amcatnlo-pythia8 			0.01398
+TTTT_TuneCUETP8M1_13TeV-amcatnlo-pythia8 			0.009103
+ttZJets_13TeV_madgraphMLM 					0.659
+WWG_TuneCUETP8M1_13TeV-amcatnlo-pythia8 			0.2147
