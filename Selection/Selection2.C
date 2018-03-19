@@ -16,17 +16,22 @@
 #include <fstream>                  // functions for file I/O
 #include <TChain.h>
 
-#include "CaltechTriboson/Selection/Event.hh"
+#include "CaltechTriboson/Utils/Event.hh"
+#include "CaltechTriboson/Utils/Obj.hh"
+#include "CaltechTriboson/Utils/Lep.hh"
+#include "CaltechTriboson/Utils/Jet.hh"
+
+#include "CaltechTriboson/Utils/LeptonID.hh"
 
 #endif
-
-
 
 void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2RazorNtupleV3.15/MC_Summer16/RunIISpring16/v5/sixie/WWZJetsTo4L2Nu_4f_TuneCUETP8M1_13TeV_aMCatNLOFxFx_pythia8/Run2RazorNtuplerV3p15_ToCERN_MC_Summer16_25ns_RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v2_v5_v1/170815_180614/0000/razorNtuple_10.root",
 		TString outfile="test.root", 
 	       Float_t xsec=1.0, 
 	       Float_t lumi=100.0
 		  ) {
+
+  int mcPeriod=2016;
 
   const float EL_MASS = 0.000511;
   const float MU_MASS = 0.105658;
@@ -38,6 +43,8 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   const float JET_ETA_CUT = 3.0;
   const float JET_PT_CUT = 20;
 
+  const float OVLP_R = 0.3;
+
   TFile *f = new TFile(infile,"read");
 
   TTree *t = (TTree*) f->Get("ntuples/RazorEvents");
@@ -46,6 +53,7 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   UInt_t          runNum;
   UInt_t          lumiNum;
   UInt_t          eventNum;
+  Float_t         fixedGridRhoFastjetAll;
 
   Int_t           nMuons;
   Float_t         muonE[700];   //[nMuons]
@@ -54,10 +62,12 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   Float_t         muonPhi[700];   //[nMuons]
   Int_t           muonCharge[700];   //[nMuons]
   Float_t         muon_dZ[700]; //[nMuons]
-  //Float_t         muon_pileupIso[700];   //[nMuons]
-  //Float_t         muon_chargedIso[700];   //[nMuons]
-  //Float_t         muon_photonIso[700];   //[nMuons]
-  //Float_t         muon_neutralHadIso[700]; //[nMuons]
+  Bool_t          muonIsLoose[700]; //[nMuons]
+  Float_t muon_ip3dSignificance[700]; //[nMuons]
+  Float_t         muon_pileupIso[700];   //[nMuons]
+  Float_t         muon_chargedIso[700];   //[nMuons]
+  Float_t         muon_photonIso[700];   //[nMuons]
+  Float_t         muon_neutralHadIso[700]; //[nMuons]
 
   Int_t           nElectrons;
   Float_t         eleE[700];   //[nElectrons]
@@ -65,11 +75,15 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   Float_t         eleEta[700];   //[nElectrons]
   Float_t         elePhi[700];   //[nElectrons]
   Float_t         eleCharge[700];   //[nElectrons]
+  Float_t         eleEta_SC[700]; //[nElectrons]
+  Float_t         ele_d0[700]; //[nElectrons]
   Float_t         ele_dZ[700]; //[nElectrons]
-  //Float_t         ele_pileupIso[700];   //[nElectrons]
-  //Float_t         ele_chargedIso[700];   //[nElectrons]
-  //Float_t         ele_photonIso[700];   //[nElectrons]
-  //Float_t         ele_neutralHadIso[700]; //[nElectrons]
+  Float_t         ele_pileupIso[700];   //[nElectrons]
+  Float_t         ele_chargedIso[700];   //[nElectrons]
+  Float_t         ele_photonIso[700];   //[nElectrons]
+  Float_t         ele_neutralHadIso[700]; //[nElectrons]  
+  Float_t         ele_IDMVAGeneralPurpose[700]; //[nElectrons]
+  Float_t         ele_IDMVAHZZ[700]; //[nElectrons]
   
   Int_t           nJets;
   Float_t         jetE[900];   //[nJets]
@@ -78,6 +92,8 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   Float_t         jetPhi[900];   //[nJets]
   Float_t         jetCSV[900];   //[nJets]
   Float_t         jetCISV[900];   //[nJets]
+  Bool_t jetPassIDLoose[900]; //[nJets]
+
   Float_t         metPt;
   Float_t         metPhi;
   Float_t         metPuppiPt;
@@ -100,13 +116,21 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   t->SetBranchAddress("runNum",	       	 &runNum);
   t->SetBranchAddress("lumiNum",	 &lumiNum);
   t->SetBranchAddress("eventNum",	 &eventNum);
+  t->SetBranchAddress("fixedGridRhoFastjetAll",	 &fixedGridRhoFastjetAll);
+
   t->SetBranchAddress("nMuons",	       	 &nMuons);
   t->SetBranchAddress("muonE",      	 &muonE);
   t->SetBranchAddress("muonPt",     	 &muonPt);
   t->SetBranchAddress("muonEta",    	 &muonEta);
   t->SetBranchAddress("muonPhi",    	 &muonPhi);
   t->SetBranchAddress("muonCharge",    	 &muonCharge);
+  t->SetBranchAddress("muonIsLoose",   	 &muonIsLoose);
   t->SetBranchAddress("muon_dZ",    	 &muon_dZ);
+  t->SetBranchAddress("muon_ip3dSignificance",&muon_ip3dSignificance);
+  t->SetBranchAddress("muon_pileupIso",    	 &muon_pileupIso);
+  t->SetBranchAddress("muon_chargedIso",    	 &muon_chargedIso);
+  t->SetBranchAddress("muon_photonIso",    	 &muon_photonIso);
+  t->SetBranchAddress("muon_neutralHadIso",    	 &muon_neutralHadIso);
 
   t->SetBranchAddress("nElectrons",   	 &nElectrons);
   t->SetBranchAddress("eleE",       	 &eleE);
@@ -114,7 +138,15 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   t->SetBranchAddress("eleEta",     	 &eleEta);
   t->SetBranchAddress("elePhi",     	 &elePhi);
   t->SetBranchAddress("eleCharge",  	 &eleCharge);
+  t->SetBranchAddress("eleEta_SC",     	 &eleEta_SC);
+  t->SetBranchAddress("ele_d0",    	 &ele_d0);
   t->SetBranchAddress("ele_dZ",    	 &ele_dZ);
+  t->SetBranchAddress("ele_pileupIso",    	 &ele_pileupIso);
+  t->SetBranchAddress("ele_chargedIso",    	 &ele_chargedIso);
+  t->SetBranchAddress("ele_photonIso",    	 &ele_photonIso);
+  t->SetBranchAddress("ele_neutralHadIso",    	 &ele_neutralHadIso);
+  t->SetBranchAddress("ele_IDMVAGeneralPurpose", &ele_IDMVAGeneralPurpose);
+  t->SetBranchAddress("ele_IDMVAHZZ",    	 &ele_IDMVAHZZ);
 
   t->SetBranchAddress("nJets",	       	 &nJets);
   t->SetBranchAddress("jetE",       	 &jetE);
@@ -123,6 +155,8 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   t->SetBranchAddress("jetPhi",     	 &jetPhi);
   t->SetBranchAddress("jetCSV",     	 &jetCSV);
   t->SetBranchAddress("jetCISV",   	 &jetCISV);
+  t->SetBranchAddress("jetPassIDLoose",  &jetPassIDLoose);
+
   t->SetBranchAddress("metPt",	       	 &metPt);
   t->SetBranchAddress("metPhi",          &metPhi);
   t->SetBranchAddress("metPuppiPt",	 &metPuppiPt);
@@ -156,13 +190,18 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
 
   WWZ::Event *evt = new WWZ::Event();
 
+  //TObject::Class()->IgnoreTObjectStreamer();
   WWZ::Event::Class()->IgnoreTObjectStreamer();
+  WWZ::Obj::Class()->IgnoreTObjectStreamer();
+  WWZ::Lep::Class()->IgnoreTObjectStreamer();
+  WWZ::Jet::Class()->IgnoreTObjectStreamer();
 
   outTree->Branch("evt", &evt);
-
+  
   for (uint i=0; i<t->GetEntries(); i++) {
   //for (uint i=0; i<10; i++) {
     t->GetEntry(i);
+    evt->Reset();
 
     //fill normalization histogram    
     NEvents->SetBinContent( 1, NEvents->GetBinContent(1) + genWeight);
@@ -226,46 +265,45 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
 
     //muons
     for( int i = 0; i < nMuons; i++ ){
-      //if(!isMuonPOGLooseMuon(i)) continue;TODO
-      if(muonPt[i] < LEP_ETA_CUT) continue;
-      if(fabs(muonEta[i]) > LEP_PT_CUT) continue;
-      //remove overlaps TODO
-      //bool overlap = false;
-      //for(auto& lep : Leptons){
-      //	if (RazorAnalyzer::deltaR(muonEta[i],muonPhi[i],lep.Eta(),lep.Phi()) < 0.3) overlap = true;
-      //}
-      //if(overlap) continue;
+      if (!muLooseID(muonIsLoose[i], muon_ip3dSignificance[i])) continue;
+      if (!muLooseIso(muonPt[i], muon_chargedIso[i], muon_photonIso[i], muon_neutralHadIso[i], muon_pileupIso[i])) continue;
+  
+      if(muonPt[i] < LEP_PT_CUT) continue;
+      if(fabs(muonEta[i]) > LEP_ETA_CUT) continue;
+  
+      //remove overlaps
+      bool overlap = false;
+      for(auto& lep : vLep){
+      	if (deltaR(muonEta[i],muonPhi[i],lep.recV.Eta(),lep.recV.Phi()) < OVLP_R) overlap = true;
+      }
+      if(overlap) continue;
 
-      WWZ::Lep tLep;
-      tLep.pid = -13*muonCharge[i]; tLep.index=i;
-      tLep.pt = muonPt[i]; tLep.eta=muonEta[i]; tLep.phi=muonPhi[i]; tLep.m=MU_MASS;
-      tLep.dZ = muon_dZ[i];
-      tLep.passLooseMVA = true; //TODO
+      WWZ::Lep tLep(muonPt[i], muonEta[i], muonPhi[i], MU_MASS, muon_dZ[i], -13*muonCharge[i]);
+      tLep.passLoose = true; 
 
       vLep.push_back(tLep);
     }
 
     //electrons
     for( int i = 0; i < nElectrons; i++ ) {
-      //if(!(passMVAVetoElectronID(i) &&  TODO
-      //	   ( (fabs(eleEta[i]) < 1.5 && fabs(ele_d0[i]) < 0.0564) ||
-      //	     (fabs(eleEta[i]) >= 1.5 && fabs(ele_d0[i]) < 0.222))
-      //	   && passEGammaPOGVetoElectronIso(i))) continue;  
-      if(elePt[i] < 10) continue;
-      if(fabs(eleEta[i]) > 2.4) continue;
+      if (!eleVetoMvaID(elePt[i], eleEta_SC[i], ele_IDMVAGeneralPurpose[i], ele_IDMVAHZZ[i])) continue;
+      if (!eleVetoIso(elePt[i], eleEta_SC[i], ele_chargedIso[i], ele_photonIso[i], 
+		      ele_neutralHadIso[i], ele_pileupIso[i])) continue;
+      if (!( fabs(eleEta[i]<1.5 && fabs(ele_d0[i]) < 0.0564) ||
+	     (fabs(eleEta[i]) >= 1.5 && fabs(ele_d0[i]) < 0.222))) continue;
+
+      if(elePt[i] < LEP_PT_CUT) continue;
+      if(fabs(eleEta[i]) > LEP_ETA_CUT) continue;
       
-      //remove overlaps TODO
-      //bool overlap = false;
-      //for(auto& lep : Leptons){
-      //	if (RazorAnalyzer::deltaR(eleEta[i],elePhi[i],lep.Eta(),lep.Phi()) < 0.3) overlap = true;
-      //}
-      //if(overlap) continue;
+      //remove overlaps
+      bool overlap = false;
+      for(auto& lep : vLep){
+      	if (deltaR(eleEta[i],elePhi[i],lep.recV.Eta(),lep.recV.Phi()) < OVLP_R) overlap = true;
+      }
+      if(overlap) continue;
       
-      WWZ::Lep tLep;
-      tLep.pid = -11*eleCharge[i]; tLep.index=i;
-      tLep.pt = elePt[i]; tLep.eta=eleEta[i]; tLep.phi=elePhi[i]; tLep.m=EL_MASS;
-      tLep.dZ = ele_dZ[i];
-      tLep.passLooseMVA = true; //TODO
+      WWZ::Lep tLep(elePt[i], eleEta[i], elePhi[i], EL_MASS, ele_dZ[i], -13*eleCharge[i]);
+      tLep.passLoose = true; 
 
       vLep.push_back(tLep);
     }
@@ -279,16 +317,13 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
     
     for (uint i=0; i<vLep.size(); i++) {
       for (uint j=i+1; j<vLep.size(); j++) {
-	if (!(vLep[i].pid == -1*vLep[j].pid)) continue;
-	TLorentzVector tmpL1(0,0,0,0), tmpL2(0,0,0,0);
-	tmpL1.SetPtEtaPhiM(vLep[i].pt, vLep[i].eta, vLep[i].phi, vLep[i].m);
-	tmpL2.SetPtEtaPhiM(vLep[j].pt, vLep[j].eta, vLep[j].phi, vLep[j].m);
-	float tmpM = (tmpL1+tmpL2).M();
+	if (!(vLep[i].fpid == -1*vLep[j].fpid)) continue;
+	float tmpM = (vLep[i].recV+vLep[j].recV).M();
 	
 	if (fabs(tmpM-Z_MASS) < minDm) {
 	  minDm = fabs(tmpM-Z_MASS);
 	  
-	  if (vLep[i].pid>0) {
+	  if (vLep[i].fpid>0) {
 	    ZCandLepIndex=pair<int,int>(i,j);
 	  }
 	  else {
@@ -296,7 +331,7 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
 	  }
 
 	  evt->ZMass = tmpM;
-	  evt->ZPt   = (tmpL1+tmpL2).Pt();
+	  evt->ZPt   = (vLep[i].recV+vLep[j].recV).Pt();
 	  foundZ= true;
 	}
       } 
@@ -311,46 +346,46 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
     for (uint i=0; i<vLep.size(); i++) {
       if (foundZ && ( i == ZCandLepIndex.first || i == ZCandLepIndex.second )) continue;
 
-      if (vLep[i].pt > evt->lep3.pt) {
+      if (vLep[i].recV.Pt() > evt->lep3.recV.Pt()) {
 	evt->lep4 = evt->lep3;
 	evt->lep3 = vLep[i];
       }
-      else if (vLep[i].pt > evt->lep4.pt) {
+      else if (vLep[i].recV.Pt() > evt->lep4.recV.Pt()) {
 	evt->lep4 = vLep[i];
       }
     }
 
     // jets
     std::vector<WWZ::Jet> jetVector;
-    auto ptOrder = [](auto a, auto b) { return a.pt > b.pt; };
+    auto ptOrder = [](auto a, auto b) { return a.recV.Pt() > b.recV.Pt(); };
       
     for(int i = 0; i < nJets; i++){
 
       // remove overlaps
-      //double deltaR = -1; //TODO
-      //for(auto& lep : Leptons){
-      //	double thisDR = RazorAnalyzer::deltaR(jetEta[i],jetPhi[i],lep.Eta(),lep.Phi());  
-      //	if(deltaR < 0 || thisDR < deltaR) deltaR = thisDR;
-      //}
-      //if(deltaR > 0 && deltaR < 0.4) continue; //jet matches a selected lepton
+      double dR = -1;
+      for(auto& lep : vLep){
+      	double thisDR = deltaR(jetEta[i],jetPhi[i],lep.recV.Eta(),lep.recV.Phi());  
+      	if(dR < 0 || thisDR < dR) dR = thisDR;
+      }
+      if(dR > 0 && dR < 0.4) continue; //jet matches a selected lepton
 
       //jec TODO
       double JEC = 1.0;//JetEnergyCorrectionFactor( jetPt[i], jetEta[i], jetPhi[i], jetE[i],
       //fixedGridRhoAll, jetJetArea[i], runNum,
       //JetCorrectorIOV,JetCorrector);
 
-      WWZ::Jet thisJet; 
-      thisJet.pt=jetPt[i]*JEC; thisJet.eta=jetEta[i]; thisJet.phi=jetPhi[i]; thisJet.e=jetE[i]*JEC;
-      thisJet.csv = jetCISV[i];
 
-      if( thisJet.pt < JET_PT_CUT ) continue;
-      if( fabs( thisJet.eta ) >= JET_ETA_CUT ) continue;
-      //if ( !jetPassIDLoose[i] ) continue; TODO
+      if( jetPt[i]*JEC < JET_PT_CUT ) continue;
+      if( fabs( jetEta[i] ) >= JET_ETA_CUT ) continue;
+      if ( !jetPassIDLoose[i] ) continue;
+
+      WWZ::Jet thisJet(jetPt[i]*JEC, jetEta[i], jetPhi[i], jetE[i]*JEC);
+      thisJet.csv = jetCISV[i]; //is btag? TODO
+      thisJet.jec=JEC;
 
       evt->NJet20++;
 
-      jetVector.push_back(thisJet);
-      if (thisJet.pt > 30) {
+      if (thisJet.recV.Pt() > 30) {
 	evt->NJet30++;
 	
 	//TODO
@@ -364,8 +399,17 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
 	//}
       }
       
-      //if (isCSVL(i)) evt->NBJet20++; //TODO
-      //if (isCSVL(i) && thisJet.pt > 30) NBJet30++; //TODO
+      if (isData && jetLooseCISV(jetCISV[i], runNum)) {
+	thisJet.isBtag=true;
+	evt->NBJet20++;
+	if (thisJet.recV.Pt()>30) evt->NBJet30++;
+      }
+      else if (!isData && jetLooseCISV(jetCISV[i], mcPeriod)) {
+	thisJet.isBtag=true;
+	evt->NBJet20++;
+	if (thisJet.recV.Pt()>30) evt->NBJet30++;
+      }
+      jetVector.push_back(thisJet);
     }
 
     sort(jetVector.begin(), jetVector.end(), ptOrder);
@@ -429,12 +473,12 @@ void Selection2(TString infile="/eos/cms/store/group/phys_susy/razor/run2/Run2Ra
   }
   
   outFile->Write();
-  NEvents->Write();
-  SumWeights->Write();
-  SumScaleWeights->Write();
-  //SumPdfWeights->Write();
-  histNPV->Write();
-  puhisto->Write();
+  //NEvents->Write();
+  //SumWeights->Write();
+  //SumScaleWeights->Write();
+  ////SumPdfWeights->Write();
+  //histNPV->Write();
+  //puhisto->Write();
   outFile->Close();
 
 

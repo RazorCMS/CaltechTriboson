@@ -7,7 +7,10 @@
   //path += "-I. -I$ROOTSYS/src -I$CMSSW_BASE/src";
   //gSystem->SetIncludePath(path.Data());
 
-  gROOT->ProcessLine(".L $CMSSW_BASE/src/CaltechTriboson/Selection/Event.cc+");
+  gROOT->ProcessLine(".L $CMSSW_BASE/src/CaltechTriboson/Utils/Obj.cc+");
+  gROOT->ProcessLine(".L $CMSSW_BASE/src/CaltechTriboson/Utils/Lep.cc+");
+  gROOT->ProcessLine(".L $CMSSW_BASE/src/CaltechTriboson/Utils/Jet.cc+");
+  gROOT->ProcessLine(".L $CMSSW_BASE/src/CaltechTriboson/Utils/Event.cc+");
 
   //gSystem->Load("$CMSSW_BASE/lib/slc6_amd64_gcc491/libBaconAnaDataFormats.so");
     

@@ -1,20 +1,11 @@
 #ifndef CALTECHTRIBOSON_SELECTION_EVENTS_HH
 #define CALTECHTRIBOSON_SELECTION_EVENTS_HH
 
+#include "TLorentzVector.h"
+#include "CaltechTriboson/Utils/Lep.hh"
+#include "CaltechTriboson/Utils/Jet.hh"
+
 namespace WWZ {
-
-  struct Lep {
-    float pt, eta, phi, m, dZ;
-    float genPt, genEta, genPhi;
-    int pid, index;
-    bool isPrompt, passLooseMVA;
-  };
-
-  struct Jet {
-    float pt, eta, phi, e;
-    float genPt, genEta, genPhi;
-    float csv;
-  };
 
   class Event : public TObject {
   public:
@@ -27,7 +18,9 @@ namespace WWZ {
     float pileupWeight, pileupWeightUp, pileupWeightDown;
     float triggerEffWeight;
     float triggerEffSFWeight;
+
     Lep lep1, lep2, lep3, lep4;
+    Jet jet1, jet2, jet3, jet4;
 
     float phi0, theta0, phi, theta1, theta2, phiH;
     
@@ -37,9 +30,6 @@ namespace WWZ {
     float lep34MT;
     
     int NJet20;
-    Jet jet1, jet2, jet3, jet4;
-    //float jet1Pt, jet2Pt, jet3Pt, jet4Pt;
-    //float jet1CISV, jet2CISV, jet3CISV, jet4CISV;
     int NJet30;
     int NBJet20;
     int NBJet30;
